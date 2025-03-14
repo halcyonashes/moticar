@@ -8,9 +8,9 @@ class SplashScreen extends StatelessWidget {
     return Scaffold(
       body: Center(
         child: Image.asset(
-          'assets/splash.jpg', // Ensure you have an image in the assets folder
-          width: 200,
-          height: 200,
+          'assets/splash.jpg',
+          width: double.infinity,
+          height: double.infinity,
         ),
       ),
     );
