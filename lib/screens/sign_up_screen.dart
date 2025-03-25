@@ -1,25 +1,29 @@
 import 'package:flutter/material.dart';
-import 'package:moticar/bloc/login_bloc.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:moticar/screens/phone_number_screen.dart';
-import 'sign_up_screen.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../bloc/sign_up_bloc.dart';
+import 'verify_email_screen.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class SignUpScreen extends StatefulWidget {
+  const SignUpScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<SignUpScreen> createState() => _SignUpScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _SignUpScreenState extends State<SignUpScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
+  final TextEditingController _usernameController = TextEditingController();
   bool _isChecked = false;
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => LoginBloc(),
+      create: (context) => SignUpBloc(
+        supabase: Supabase.instance.client,
+      ),
       child: Scaffold(
         body: Padding(
           padding: const EdgeInsets.all(24.0),
@@ -27,27 +31,43 @@ class _LoginScreenState extends State<LoginScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Text(
-                "Login",
+                "Sign Up",
                 style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 20),
 
-              // 🔹 Email Input
+              // Username Input
               TextField(
-                controller: _emailController,
-                decoration: const InputDecoration(labelText: "Email"),
+                controller: _usernameController,
+                decoration: const InputDecoration(labelText: "Username"),
               ),
               const SizedBox(height: 10),
 
-              // 🔹 Password Input
+              // Email Input
+              TextField(
+                controller: _emailController,
+                decoration: const InputDecoration(labelText: "Email"),
+                keyboardType: TextInputType.emailAddress,
+              ),
+              const SizedBox(height: 10),
+
+              // Password Input
               TextField(
                 controller: _passwordController,
                 decoration: const InputDecoration(labelText: "Password"),
                 obscureText: true,
               ),
+              const SizedBox(height: 10),
+
+              // Confirm Password Input
+              TextField(
+                controller: _confirmPasswordController,
+                decoration: const InputDecoration(labelText: "Confirm Password"),
+                obscureText: true,
+              ),
               const SizedBox(height: 20),
 
-              // 🔹 Checkbox for Terms Agreement
+              // Terms Agreement Checkbox
               Row(
                 children: [
                   Checkbox(
@@ -77,31 +97,18 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 30),
 
-              // Sign Up Button
-              TextButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const SignUpScreen(),
-                    ),
-                  );
-                },
-                child: const Text("Don't have an account? Sign Up"),
-              ),
-
-              // 🔹 BlocConsumer for State Handling
-              BlocConsumer<LoginBloc, LoginState>(
+              // Sign Up Button with BlocConsumer
+              BlocConsumer<SignUpBloc, SignUpState>(
                 listener: (context, state) {
-                  if (state is LoginFailure) {
+                  if (state is SignUpFailure) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text(state.error), backgroundColor: Colors.red),
                     );
-                  } else if (state is LoginEmailVerificationRequired) {
+                  } else if (state is SignUpEmailVerificationRequired) {
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const PhoneNumberScreen(),
+                        builder: (context) => const VerifyEmailScreen(),
                       ),
                     );
                   }
@@ -110,17 +117,33 @@ class _LoginScreenState extends State<LoginScreen> {
                   return ElevatedButton(
                     onPressed: _isChecked
                         ? () {
-                      final email = _emailController.text;
-                      final password = _passwordController.text;
+                            final email = _emailController.text;
+                            final password = _passwordController.text;
+                            final confirmPassword = _confirmPasswordController.text;
+                            final username = _usernameController.text;
 
-                      context.read<LoginBloc>().add(
-                        LoginSubmitted(email: email, password: password),
-                      );
-                    }
+                            if (password != confirmPassword) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text("Passwords do not match"),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                              return;
+                            }
+
+                            context.read<SignUpBloc>().add(
+                              SignUpSubmitted(
+                                email: email,
+                                password: password,
+                                username: username,
+                              ),
+                            );
+                          }
                         : null,
-                    child: state is LoginLoading
+                    child: state is SignUpLoading
                         ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text("Sign In"),
+                        : const Text("Sign Up"),
                   );
                 },
               ),
@@ -130,4 +153,4 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
-}
+} 

@@ -19,15 +19,21 @@ dependencies:
   go_router: ^14.8.1
   flutter_bloc: ^9.1.0
   chopper: ^8.1.0
+  chopper_generator: ^8.1.0
   shared_preferences: ^2.5.2
   email_validator: ^3.0.0
-  libphonenumber: ^2.0.2
+  image_picker: ^1.1.2
+  fl_chart: ^0.70.2
+  flutter_dotenv: ^5.2.1
+  supabase_flutter: ^2.8.4
+
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
 
   flutter_lints: ^5.0.0
+  build_runner: ^2.4.15
 
 flutter:
   assets:

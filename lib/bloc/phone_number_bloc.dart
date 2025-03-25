@@ -1,5 +1,4 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:libphonenumber/libphonenumber.dart'; // For phone validation
 
 // 🔹 Events
 abstract class PhoneNumberEvent {}
@@ -16,7 +15,10 @@ class PhoneNumberInitial extends PhoneNumberState {}
 
 class PhoneNumberLoading extends PhoneNumberState {}
 
-class PhoneNumberSuccess extends PhoneNumberState {}
+class PhoneNumberSuccess extends PhoneNumberState {
+  final String formattedNumber;
+  PhoneNumberSuccess(this.formattedNumber);
+}
 
 class PhoneNumberFailure extends PhoneNumberState {
   final String error;
@@ -33,18 +35,27 @@ class PhoneNumberBloc extends Bloc<PhoneNumberEvent, PhoneNumberState> {
       PhoneNumberSubmitted event, Emitter<PhoneNumberState> emit) async {
     emit(PhoneNumberLoading());
 
-    final isValid = await PhoneNumberUtil.isValidPhoneNumber(
-      phoneNumber: event.phoneNumber,
-      isoCode: "US", // Change to your desired country code
-    );
+    try {
+      // Remove all non-digit characters
+      final digitsOnly = event.phoneNumber.replaceAll(RegExp(r'[^\d]'), '');
+      
+      if (digitsOnly.length != 10) {
+        emit(PhoneNumberFailure("Phone number must contain exactly 10 digits"));
+        return;
+      }
 
-    if (!(isValid ?? false)) {
-      emit(PhoneNumberFailure("Invalid phone number"));
-      return;
+      // Format the phone number with spaces for readability
+      final formattedNumber = _formatPhoneNumber(digitsOnly);
+      
+      await Future.delayed(const Duration(seconds: 2)); // Simulating API call
+      emit(PhoneNumberSuccess(formattedNumber));
+    } catch (e) {
+      emit(PhoneNumberFailure("Error processing phone number: ${e.toString()}"));
     }
+  }
 
-    await Future.delayed(const Duration(seconds: 2)); // Simulating API call
-
-    emit(PhoneNumberSuccess());
+  String _formatPhoneNumber(String digits) {
+    // Format as XXX XXX XXXX
+    return '${digits.substring(0, 3)} ${digits.substring(3, 6)} ${digits.substring(6)}';
   }
 }
